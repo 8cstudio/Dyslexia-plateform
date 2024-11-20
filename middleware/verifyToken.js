@@ -7,7 +7,7 @@ export const verifyToken = (req, res, next) => {
       return res.status(401).json({ success: false, message: "Access Denied" });
     }
 
-    const decoded = jwt.verify(token, "ncjcncndhcbhdbcd");
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded?.id;
     next();
   } catch (error) {

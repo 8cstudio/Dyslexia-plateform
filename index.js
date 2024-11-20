@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import authRoute from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoute.js";
 import chatRoute from "./routes/chatRoute.js";
+import chatMessages from "./routes/messageRoute.js";
 import cors from "cors";
 import { verifyToken } from "./middleware/verifyToken.js";
 import { Message, Chat } from "./models/chat.js";
@@ -28,10 +29,10 @@ connectDB();
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/user", verifyToken, userRoutes);
 app.use("/api/v1/chat", verifyToken, chatRoute);
-
+app.use("/api/v1/message", chatMessages);
 // Create an HTTP server to attach Socket.io
 const httpServer = createServer(app);
-
+console.log(process.env.PORT);
 // Initialize Socket.io
 const io = new Server(httpServer, {
   cors: {
@@ -42,38 +43,33 @@ const io = new Server(httpServer, {
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
 
-  // Join rooms (one-to-one or group chats)
   socket.on("joinChat", ({ chatId }) => {
     socket.join(chatId);
     console.log(`User joined chat: ${chatId}`);
   });
 
-  // Handle sending messages
-  socket.on("sendMessage", async ({ sender, chatId, content, isGroupChat }) => {
+  socket.on("leaveRoom", (chatId) => {
+    socket.leave(chatId);
+    console.log(`User left chat: ${chatId}`);
+  });
+
+  socket.on("sendMessage", async ({ sender, chat, content, isGroupChat }) => {
     const newMessage = {
+      isGroupChat,
       sender,
       content,
-      chat: chatId,
-      timestamp: new Date(),
+      chat,
     };
 
     try {
-      // Save the message to the database
-      const message = await Message.create(newMessage);
-
-      // Emit the message to the appropriate room
-      io.to(chatId).emit("receiveMessage", message);
-
-      console.log(
-        `Message sent to ${isGroupChat ? "group" : "user"} chat ${chatId}:`,
-        message
-      );
+      const savedMessage = await Message.create(newMessage);
+      console.log("message sent to chat", savedMessage);
+      io.to(chat).emit("receiveMessage", savedMessage); // Emit to room
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error saving or emitting message:", error);
     }
   });
 
-  // Handle disconnection
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
   });

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/dyslexia";
+const MONGO_URI = process.env.MONGO_URI;
 
 // Function to Connect to MongoDB
 export const connectDB = async () => {

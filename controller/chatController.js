@@ -32,7 +32,7 @@ export const createChat = async (req, res) => {
     if (isGroupChat) {
       // Create a group chat
       const chat = await Chat.create({
-        participants: [req.user, ...otherUser],
+        participants: [req.user, otherUser],
         isGroupChat: true,
         groupName,
       });
@@ -55,7 +55,7 @@ export const createChat = async (req, res) => {
 
     // Create a one-to-one chat
     const chat = await Chat.create({
-      participants: [req.user._id, otherUser],
+      participants: [req.user, otherUser],
     });
 
     return res.status(201).json({ message: "Chat created successfully", chat });
@@ -86,4 +86,10 @@ export const deleteChat = async (req, res) => {
     console.error("Error deleting chat:", error);
     return res.status(500).json({ message: "Something went wrong", error });
   }
+};
+
+export const getAllChatMessages = async (req, res) => {
+  const messages = await Chat.find(req.params.id);
+
+  return res.status(200).json(messages);
 };
