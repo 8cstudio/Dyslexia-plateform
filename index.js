@@ -7,6 +7,8 @@ import authRoute from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoute.js";
 import chatRoute from "./routes/chatRoute.js";
 import chatMessages from "./routes/messageRoute.js";
+import feedRoute from "./routes/feedRoute.js";
+import taskRoute from "./routes/taskRoute.js";
 import cors from "cors";
 import { verifyToken } from "./middleware/verifyToken.js";
 import { Message, Chat } from "./models/chat.js";
@@ -30,6 +32,8 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/user", verifyToken, userRoutes);
 app.use("/api/v1/chat", verifyToken, chatRoute);
 app.use("/api/v1/message", chatMessages);
+app.use("/api/v1/feedback", feedRoute);
+app.use("/api/v1/task", verifyToken, taskRoute);
 // Create an HTTP server to attach Socket.io
 const httpServer = createServer(app);
 console.log(process.env.PORT);
