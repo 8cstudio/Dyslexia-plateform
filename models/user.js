@@ -7,11 +7,13 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     dob: { type: Date, required: true },
     bio: { type: String },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
     gender: {
       type: String,
       required: true,
     },
     progress: { type: Number, default: 0 },
+    profile_pic: { type: String },
   },
   {
     timestamps: true,

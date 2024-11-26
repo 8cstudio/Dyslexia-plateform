@@ -35,6 +35,7 @@ export const createChat = async (req, res) => {
         participants: [req.user, otherUser],
         isGroupChat: true,
         groupName,
+        creator: req.user,
       });
       return res
         .status(201)

@@ -6,10 +6,11 @@ import {
   getCurrentUser,
   updateUser,
   getAllUsers,
+  ChangeRole,
 } from "../controller/userController.js";
 
 const router = express.Router();
-
+router.put("/role", ChangeRole);
 router.get("/", getAllUsers);
 router.delete("/:id", deleteUser);
 router.put("/:id", updateUser);

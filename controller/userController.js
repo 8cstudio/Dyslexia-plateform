@@ -114,3 +114,50 @@ export const getCurrentUser = async (req, res) => {
       .json({ success: false, message: "Something went wrong", error });
   }
 };
+
+//assigb role
+
+export const ChangeRole = async (req, res) => {
+  console.log("Request Body:", req.body);
+
+  try {
+    const { id, role } = req.body;
+
+    // Ensure both `id` and `role` are provided
+    if (!id || !role) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID and role are required." });
+    }
+
+    console.log("User ID:", id, "Role:", role);
+
+    // Find the user by ID
+    const user = await User.findById(id);
+
+    // Check if user exists
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    // Update the user's role
+    user.role = role;
+    await user.save();
+
+    // Send a successful response
+    return res.status(200).json({
+      success: true,
+      message: "User role updated successfully.",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong.",
+      error: error.message || error,
+    });
+  }
+};
