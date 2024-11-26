@@ -68,7 +68,7 @@ io.on("connection", (socket) => {
     try {
       const savedMessage = await Message.create(newMessage);
       console.log("message sent to chat", savedMessage);
-      io.to(chat).emit("receiveMessage", savedMessage); // Emit to room
+      io.to(chat).emit("receiveMessage", savedMessage);
     } catch (error) {
       console.error("Error saving or emitting message:", error);
     }

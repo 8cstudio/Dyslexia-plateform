@@ -32,7 +32,7 @@ export const createChat = async (req, res) => {
     if (isGroupChat) {
       // Create a group chat
       const chat = await Chat.create({
-        participants: [req.user, otherUser],
+        participants: [...otherUser, req.user],
         isGroupChat: true,
         groupName,
         creator: req.user,
