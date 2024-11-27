@@ -1,7 +1,8 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import fs from "fs";
+import path from "path";
 // Get All Users with Pagination and Search
 export const getAllUsers = async (req, res) => {
   try {
@@ -55,32 +56,87 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// Update User
-export const updateUser = async (req, res) => {
+export const uploadProfile_pic = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, email } = req.body;
-
-    // Update user
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { name, email },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedUser) {
+    // Check if the user exists
+    const user = await User.findById(req.user);
+    if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
 
-    res.status(200).json({ success: true, user: updatedUser });
+    if (user.profile_pic) {
+      const oldPicPath = path.join(
+        process.cwd(),
+        "public/uploads",
+        user.profile_pic
+      );
+      if (fs.existsSync(oldPicPath)) {
+        fs.unlinkSync(oldPicPath); // Delete old file
+        console.log("Old profile picture deleted");
+      }
+    }
+
+    // Save the new profile picture
+    const newProfilePic = req.file.filename;
+    user.profile_pic = newProfilePic; // Update the user object with the new profile pic filename
+
+    // Save the updated user data
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+
+      message: "Profile picture updated successfully",
+    });
   } catch (error) {
+    console.error(error);
     res
       .status(500)
       .json({ success: false, message: "Something went wrong", error });
   }
 };
+
+// Update User
+export const updateUser = async (req, res) => {
+  try {
+    // Check if the user exists
+    const user = await User.findById(req.user);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Handle profile picture update if provided
+    if (req.body.profile_pic) {
+      user.profile_pic = req.body.profile_pic; // Update with the new profile picture URL or data
+    }
+
+    // Update user with new data
+    user.username = req.body.username || user.username; // Keep existing username if not provided
+    user.email = req.body.email || user.email; // Keep existing email if not provided
+    user.bio = req.body.bio || user.bio; // Keep existing bio if not provided
+
+    // Save updated user to the database
+    const updatedUser = await user.save();
+
+    // Return updated user data in the response
+    res.status(200).json({
+      success: true,
+      message: "Profile has been updated successfully",
+      updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Something went wrong", error });
+  }
+};
+
+//upload profile picture
 
 // Delete User
 export const deleteUser = async (req, res) => {

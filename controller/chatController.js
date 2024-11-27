@@ -3,7 +3,7 @@ import { Chat } from "../models/chat.js";
 export const getAllChat = async (req, res) => {
   try {
     const chats = await Chat.find({ participants: { $in: req.user } })
-      .populate("participants", "username email")
+      .populate("participants")
       .populate({
         path: "messages",
         options: { sort: { createdAt: -1 } },

@@ -12,12 +12,23 @@ import taskRoute from "./routes/taskRoute.js";
 import cors from "cors";
 import { verifyToken } from "./middleware/verifyToken.js";
 import { Message, Chat } from "./models/chat.js";
+
 const app = express();
 dotenv.config();
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 // Middleware for parsing JSON
 app.use(express.json());
+// URL Example for uploaded files
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
+// Serve static files from the "uploads" folder
+//app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static("public"));
 app.use(
   cors({
     origin: "*",
@@ -69,6 +80,7 @@ io.on("connection", (socket) => {
       const savedMessage = await Message.create(newMessage);
       console.log("message sent to chat", savedMessage);
       io.to(chat).emit("receiveMessage", savedMessage);
+      addMessageToChat(chat, savedMessage);
     } catch (error) {
       console.error("Error saving or emitting message:", error);
     }
@@ -78,6 +90,25 @@ io.on("connection", (socket) => {
     console.log("A user disconnected:", socket.id);
   });
 });
+
+export const addMessageToChat = async (chatId, savedMessage) => {
+  try {
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatId,
+      {
+        $push: {
+          messages: savedMessage,
+        },
+      },
+      { new: true } // Return the updated document
+    );
+
+    return updatedChat;
+  } catch (error) {
+    console.error("Error updating chat:", error);
+    throw error; // Re-throw the error for higher-level handling
+  }
+};
 
 // Start the server
 const PORT = process.env.PORT || 4000;

@@ -1,49 +1,60 @@
 import mongoose from "mongoose";
 
-const messageSchema = new mongoose.Schema({
-  sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+const messageSchema = new mongoose.Schema(
+  {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    chat: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat",
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  content: {
-    type: String,
-    required: true,
-  },
-  chat: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Chat",
-    required: true,
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
-const chatSchema = new mongoose.Schema({
-  isGroupChat: {
-    type: Boolean,
-    default: false,
-  },
-  creator: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  participants: [
-    {
+const chatSchema = new mongoose.Schema(
+  {
+    isGroupChat: {
+      type: Boolean,
+      default: false,
+    },
+    creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-  ],
-  groupName: {
-    type: String,
-    required: function () {
-      return this.isGroupChat;
+    participants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    groupName: {
+      type: String,
+      required: function () {
+        return this.isGroupChat;
+      },
     },
+    messages: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
+      },
+    ],
   },
-  messages: [messageSchema],
-});
+  { timestamps: true }
+);
 
 const Chat = mongoose.model("Chat", chatSchema);
 const Message = mongoose.model("Message", messageSchema);
