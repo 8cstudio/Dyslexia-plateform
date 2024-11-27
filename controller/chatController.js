@@ -94,3 +94,48 @@ export const getAllChatMessages = async (req, res) => {
 
   return res.status(200).json(messages);
 };
+
+export const ADD_USER_TO_GROUP = async (req, res) => {
+  try {
+    // Fetch the chat by ID
+    const chat = await Chat.findById(req.params.id);
+
+    if (!chat) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Chat not found" });
+    }
+
+    // Check if the authenticated user is the creator of the chat
+    if (chat.creator.toString() !== req.user.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to add users to this chat",
+      });
+    }
+
+    // Check if the user is already a participant
+    if (chat.participants.includes(req.body.newUser)) {
+      return res.status(400).json({
+        success: false,
+        message: "User is already a participant in this chat",
+      });
+    }
+
+    // Add the new user to participants
+    chat.participants.push(req.body.newUser);
+    await chat.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User successfully added to the chat",
+    });
+  } catch (error) {
+    console.error("Error adding user to chat:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while adding the user to the chat",
+      error: error.message,
+    });
+  }
+};
