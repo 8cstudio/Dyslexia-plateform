@@ -11,6 +11,7 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isSeen: { type: Boolean, default: false },
     chat: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Chat",

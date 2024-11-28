@@ -6,6 +6,8 @@ import {
   getUserTasks,
   markTaskAsCompleted,
   updateTask,
+  undoTask,
+  updateProgress,
 } from "../controller/taskController.js";
 
 const router = express.Router();
@@ -16,6 +18,8 @@ router.put("/:id/complete", markTaskAsCompleted);
 router.delete("/:id", deleteTask);
 
 router.get("/", getUserTasks);
+router.put("/:id/undo", undoTask);
+router.put("/:id/progress", updateProgress);
 router.get("/overdue", getOverdueTasks);
 
 export default router;

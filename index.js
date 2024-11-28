@@ -17,18 +17,17 @@ const app = express();
 dotenv.config();
 import path from "path";
 import { fileURLToPath } from "url";
+import User from "./models/user.js";
 
 const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 // Middleware for parsing JSON
 app.use(express.json());
-// URL Example for uploaded files
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-// Serve static files from the "uploads" folder
-//app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve static files from the "public" folder
 app.use(express.static("public"));
+
 app.use(
   cors({
     origin: "*",
@@ -45,9 +44,10 @@ app.use("/api/v1/chat", verifyToken, chatRoute);
 app.use("/api/v1/message", chatMessages);
 app.use("/api/v1/feedback", feedRoute);
 app.use("/api/v1/task", verifyToken, taskRoute);
+
 // Create an HTTP server to attach Socket.io
 const httpServer = createServer(app);
-console.log(process.env.PORT);
+
 // Initialize Socket.io
 const io = new Server(httpServer, {
   cors: {
@@ -55,8 +55,21 @@ const io = new Server(httpServer, {
   },
 });
 
+const users = new Map();
+
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
+
+  socket.on("user-connected", async (userId) => {
+    if (!userId) return;
+
+    users.set(userId, socket.id);
+
+    // Update user's isOnline status in your database
+    updateUserStatus(userId, "online");
+
+    console.log(`User ${userId} is online`);
+  });
 
   socket.on("joinChat", ({ chatId }) => {
     socket.join(chatId);
@@ -80,7 +93,7 @@ io.on("connection", (socket) => {
       const savedMessage = await Message.create(newMessage);
       console.log("message sent to chat", savedMessage);
       io.to(chat).emit("receiveMessage", savedMessage);
-      addMessageToChat(chat, savedMessage);
+      await addMessageToChat(chat, savedMessage);
     } catch (error) {
       console.error("Error saving or emitting message:", error);
     }
@@ -88,10 +101,22 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
+    const userId = [...users.entries()].find(
+      ([, value]) => value === socket.id
+    )?.[0];
+
+    if (userId) {
+      users.delete(userId);
+
+      // Update user's isOnline status in your database
+      updateUserStatus(userId, "offline");
+      console.log(`User ${userId} is offline`);
+    }
   });
 });
 
-export const addMessageToChat = async (chatId, savedMessage) => {
+// Helper function to add a message to a chat
+const addMessageToChat = async (chatId, savedMessage) => {
   try {
     const updatedChat = await Chat.findByIdAndUpdate(
       chatId,
@@ -107,6 +132,15 @@ export const addMessageToChat = async (chatId, savedMessage) => {
   } catch (error) {
     console.error("Error updating chat:", error);
     throw error; // Re-throw the error for higher-level handling
+  }
+};
+
+// Helper function to update user status
+const updateUserStatus = async (id, status) => {
+  if (status === "online") {
+    await User.findByIdAndUpdate(id, { isOnline: true });
+  } else {
+    await User.findByIdAndUpdate(id, { isOnline: false });
   }
 };
 

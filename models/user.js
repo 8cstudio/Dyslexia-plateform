@@ -8,6 +8,10 @@ const UserSchema = new mongoose.Schema(
     dob: { type: Date, required: true },
     bio: { type: String },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
     gender: {
       type: String,
       required: true,

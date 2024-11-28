@@ -107,3 +107,67 @@ export const getOverdueTasks = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch overdue tasks", error });
   }
 };
+
+export const undoTask = async (req, res) => {
+  try {
+    // Fetch the task by ID
+    const task = await Task.findById(req.params.id);
+
+    // Check if the task exists
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Reset task status and progress
+    task.status = "Pending";
+    task.progress = 0;
+
+    // Update the deadline by adding 5 days to the current deadline
+    if (task.deadline) {
+      const newDeadline = new Date(task.deadline);
+      newDeadline.setDate(newDeadline.getDate() + 5);
+      task.deadline = newDeadline;
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Task does not have a valid deadline to extend" });
+    }
+
+    // Save the updated task
+    await task.save();
+
+    // Respond with the updated task
+    return res.status(200).json(task);
+  } catch (error) {
+    console.error("Error resetting task:", error);
+    return res.status(500).json({ message: "Something went wrong", error });
+  }
+};
+
+export const updateProgress = async (req, res) => {
+  try {
+    // Fetch the task by ID
+    const task = await Task.findById(req.params.id);
+
+    // Check if the task exists
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    task.progress = Math.min(task.progress + 10, 100);
+    if (task.progress === 100) {
+      task.status = "Completed";
+    }
+
+    // Save the updated task
+    await task.save();
+
+    // Respond with the updated task
+    return res.status(200).json(task);
+  } catch (error) {
+    console.error("Error updating progress:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to update task progress", error });
+  }
+};

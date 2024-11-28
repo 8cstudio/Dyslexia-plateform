@@ -1,7 +1,46 @@
 import { Chat } from "../models/chat.js";
 
+// export const getAllChat = async (req, res) => {
+//   try {
+//     const { search } = req.query; // Extract search query from request
+
+//     // Build search criteria
+//     const searchCriteria = {
+//       participants: { $in: [req.user] },
+//     };
+
+//     // If a search query is provided, add it to the criteria
+//     if (search) {
+//       searchCriteria["participants"] = {
+//         $elemMatch: { username: { $regex: search, $options: "i" } }, // Use $elemMatch to search within array
+//       };
+//     }
+
+//     // Fetch chats based on criteria
+//     const chats = await Chat.find(searchCriteria)
+//       .populate("participants") // Populate participants with user details
+//       .populate({
+//         path: "messages",
+//         options: { sort: { createdAt: -1 } }, // Sort messages by creation time (latest first)
+//       })
+//       .sort({ updatedAt: -1 }); // Sort chats by their latest activity
+
+//     return res.status(200).json(chats);
+//   } catch (error) {
+//     console.error("Error fetching chats:", error);
+//     return res.status(500).json({ message: "Something went wrong", error });
+//   }
+// };
+
 export const getAllChat = async (req, res) => {
   try {
+    const { search } = req.query;
+    let query = {};
+    if (search) {
+      query = {
+        $elemMatch: { groupName: { $regex: search, $options: "i" } },
+      };
+    }
     const chats = await Chat.find({ participants: { $in: req.user } })
       .populate("participants")
       .populate({
@@ -16,7 +55,6 @@ export const getAllChat = async (req, res) => {
     return res.status(500).json({ message: "Something went wrong", error });
   }
 };
-
 export const createChat = async (req, res) => {
   try {
     const { isGroupChat, otherUser, groupName } = req.body;

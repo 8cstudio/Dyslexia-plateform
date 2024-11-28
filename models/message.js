@@ -7,6 +7,10 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    isSeen: {
+      type: Boolean,
+      default: false,
+    },
     content: {
       type: String,
       required: true,
