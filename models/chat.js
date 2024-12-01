@@ -11,6 +11,15 @@ const messageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    type: {
+      type: String,
+      default: "text",
+      enum: ["text", "file"],
+    },
+    ext: {
+      type: String,
+    },
+
     isSeen: { type: Boolean, default: false },
     chat: {
       type: mongoose.Schema.Types.ObjectId,

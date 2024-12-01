@@ -18,6 +18,7 @@ dotenv.config();
 import path from "path";
 import { fileURLToPath } from "url";
 import User from "./models/user.js";
+import { upload } from "./middleware/FileSend.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,23 +82,40 @@ io.on("connection", (socket) => {
     console.log(`User left chat: ${chatId}`);
   });
 
-  socket.on("sendMessage", async ({ sender, chat, content, isGroupChat }) => {
+  socket.on("sendFile", async (data) => {
+    console.log("file", data);
     const newMessage = {
-      isGroupChat,
-      sender,
-      content,
-      chat,
+      isGroupChat: data.isGroupChat,
+      sender: data.sender,
+      file: data.file,
+      chat: data.chat,
+      content: "",
     };
-
-    try {
-      const savedMessage = await Message.create(newMessage);
-      console.log("message sent to chat", savedMessage);
-      io.to(chat).emit("receiveMessage", savedMessage);
-      await addMessageToChat(chat, savedMessage);
-    } catch (error) {
-      console.error("Error saving or emitting message:", error);
-    }
+    io.to(data.chat).emit("receiveMessage");
   });
+
+  socket.on(
+    "sendMessage",
+    async ({ sender, chat, content, isGroupChat, type, ext }) => {
+      const newMessage = {
+        isGroupChat,
+        sender,
+        content,
+        chat,
+        ext: ext,
+        type: type,
+      };
+
+      try {
+        const savedMessage = await Message.create(newMessage);
+        console.log("message sent to chat", savedMessage);
+        io.to(chat).emit("receiveMessage", savedMessage);
+        await addMessageToChat(chat, savedMessage);
+      } catch (error) {
+        console.error("Error saving or emitting message:", error);
+      }
+    }
+  );
 
   socket.on("disconnect", () => {
     console.log("A user disconnected:", socket.id);
@@ -148,4 +166,18 @@ const updateUserStatus = async (id, status) => {
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
   console.log(`Server is running at port ${PORT}`);
+});
+
+app.post("/chat/:id/upload", upload.single("file"), async (req, res) => {
+  try {
+    console.log("file", req.file);
+
+    return res.status(201).json({
+      message: "file send successfully",
+      fileUrl: req.file.filename,
+      ext: req.file.mimetype,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "something went wrong", error });
+  }
 });
