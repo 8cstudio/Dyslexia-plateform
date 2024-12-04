@@ -56,6 +56,10 @@ const chatSchema = new mongoose.Schema(
         return this.isGroupChat;
       },
     },
+
+    logo: {
+      type: String,
+    },
     messages: [
       {
         type: mongoose.Schema.Types.ObjectId,

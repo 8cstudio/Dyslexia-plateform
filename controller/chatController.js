@@ -56,8 +56,15 @@ export const getAllChat = async (req, res) => {
   }
 };
 export const createChat = async (req, res) => {
+  console.log("body", req.body);
+  console.log(req.file);
   try {
     const { isGroupChat, otherUser, groupName } = req.body;
+    let participants = "";
+
+    if (isGroupChat) {
+      participants = JSON.parse(otherUser);
+    }
 
     // Validation for group chats
     if (isGroupChat && (!groupName || !otherUser || otherUser.length < 2)) {
@@ -70,10 +77,11 @@ export const createChat = async (req, res) => {
     if (isGroupChat) {
       // Create a group chat
       const chat = await Chat.create({
-        participants: [...otherUser, req.user],
+        participants: [...participants, req.user],
         isGroupChat: true,
         groupName,
         creator: req.user,
+        logo: req.file.filename,
       });
       return res
         .status(201)
